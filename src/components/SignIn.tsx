@@ -22,14 +22,14 @@ function SignIn() {
   return (
     <>
       {!authUser && (
-        <Button variant="outlined" onClick={handleClick}>
+        <Button variant="contained" onClick={handleClick}>
           Sign in with Google
         </Button>
       )}
 
       {authUser && (
         <>
-          <Button variant="outlined" onClick={handleSignOut}>
+          <Button variant="contained" onClick={handleSignOut}>
             Sign Out
           </Button>
         </>

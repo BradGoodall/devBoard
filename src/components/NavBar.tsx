@@ -5,7 +5,8 @@ import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import Container from "@mui/material/Container";
 import Box from "@mui/material/Box";
-// import Avatar from "@mui/material/Avatar";
+import Avatar from "@mui/material/Avatar";
+import SignIn from "./SignIn";
 
 function NavBar() {
   const authUser = useContext(UserContext);
@@ -29,12 +30,18 @@ function NavBar() {
           >
             devBoard
           </Typography>
+
           {authUser && (
             <Box sx={{ flexGrow: 0 }}>
-              {/* <Avatar alt="Remy Sharp" src={authUser.photoURL} /> */}
-              <Typography>{authUser.displayName}</Typography>
+              <Avatar
+                alt={authUser.displayName?.toString()}
+                src={authUser.photoURL?.toString()}
+              />
             </Box>
           )}
+          <Box>
+            <SignIn />
+          </Box>
         </Toolbar>
       </Container>
     </AppBar>
