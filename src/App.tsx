@@ -1,35 +1,35 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useState, useEffect } from "react";
+import { auth } from "./FirebaseConfig";
+import { User, onAuthStateChanged } from "firebase/auth";
+import { UserContext } from "./UserContext";
+import SignIn from "./components/SignIn";
+import "./App.css";
+import NavBar from "./components/NavBar";
 
 function App() {
-  const [count, setCount] = useState(0)
+  // This holds the current user object
+  const [authUser, setAuthUser] = useState<User | undefined>(undefined);
+
+  useEffect(() => {
+    // If the AuthState changed, update the current user object
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setAuthUser(user);
+      } else {
+        setAuthUser(undefined);
+      }
+    });
+  }, []);
 
   return (
     <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+      <UserContext.Provider value={authUser}>
+        <NavBar />
+        {authUser && <h1>Hello, {authUser.displayName}</h1>}
+        <SignIn />
+      </UserContext.Provider>
     </>
-  )
+  );
 }
 
-export default App
+export default App;
