@@ -1,50 +1,33 @@
 import { useContext } from "react";
 import { UserContext } from "../UserContext";
-import AppBar from "@mui/material/AppBar";
-import Toolbar from "@mui/material/Toolbar";
-import Typography from "@mui/material/Typography";
-import Container from "@mui/material/Container";
-import Box from "@mui/material/Box";
-import Avatar from "@mui/material/Avatar";
 import SignIn from "./SignIn";
+import { FaHashtag } from "react-icons/fa";
+import Navbar from "react-bootstrap/Navbar";
+import Container from "react-bootstrap/Container";
 
 function NavBar() {
   const authUser = useContext(UserContext);
 
   return (
-    <AppBar position="static">
-      <Container maxWidth="xl">
-        <Toolbar disableGutters>
-          <Typography
-            variant="h6"
-            noWrap
-            component="a"
-            sx={{
-              mr: 2,
-              display: { xs: "none", md: "flex" },
-              fontFamily: "monospace",
-              fontWeight: 700,
-              color: "inherit",
-              textDecoration: "none",
-            }}
-          >
-            devBoard
-          </Typography>
-
+    <Navbar className="bg-zinc-600">
+      <Container>
+        <Navbar.Brand
+          className="inline-flex m-2 text-2xl text-white font-mono"
+          href="#home"
+        >
+          <FaHashtag className="mt-1" />
+          devBoard
+        </Navbar.Brand>
+        <Navbar.Collapse className="justify-content-end">
           {authUser && (
-            <Box sx={{ flexGrow: 0 }}>
-              <Avatar
-                alt={authUser.displayName?.toString()}
-                src={authUser.photoURL?.toString()}
-              />
-            </Box>
+            <Navbar.Text className="mr-2 text-white">
+              Signed in as: <a href="#login">{authUser?.displayName}</a>
+            </Navbar.Text>
           )}
-          <Box>
-            <SignIn />
-          </Box>
-        </Toolbar>
+        </Navbar.Collapse>
+        <SignIn />
       </Container>
-    </AppBar>
+    </Navbar>
   );
 }
 

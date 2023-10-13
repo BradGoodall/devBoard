@@ -1,11 +1,11 @@
+import "bootstrap/dist/css/bootstrap.min.css";
+import "./App.css";
 import { useState, useEffect } from "react";
 import { auth } from "./FirebaseConfig";
 import { User, onAuthStateChanged } from "firebase/auth";
 import { UserContext } from "./UserContext";
-import "./App.css";
 import NavBar from "./components/NavBar";
 import Home from "./components/Home";
-import { CircularProgress } from "@mui/material";
 import Profile from "./components/Profile";
 
 function App() {
@@ -30,7 +30,7 @@ function App() {
     <>
       <UserContext.Provider value={authUser}>
         <NavBar />
-        {!loaded && <CircularProgress style={{ margin: "5rem" }} />}
+        {!loaded && <h1>Loading...</h1>}
         {loaded && (
           <>
             {!authUser && <Home />}

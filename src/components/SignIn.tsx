@@ -2,8 +2,7 @@ import { useContext } from "react";
 import { signInWithPopup, signOut } from "firebase/auth";
 import { auth, provider } from "../FirebaseConfig";
 import { UserContext } from "../UserContext";
-//MUI
-import { Button } from "@mui/material";
+import Button from "react-bootstrap/Button";
 
 function SignIn() {
   const authUser = useContext(UserContext);
@@ -21,17 +20,11 @@ function SignIn() {
 
   return (
     <>
-      {!authUser && (
-        <Button variant="contained" onClick={handleClick}>
-          Sign in with Google
-        </Button>
-      )}
+      {!authUser && <Button onClick={handleClick}>Sign in with Google</Button>}
 
       {authUser && (
         <>
-          <Button variant="contained" onClick={handleSignOut}>
-            Sign Out
-          </Button>
+          <Button onClick={handleSignOut}>Sign Out</Button>
         </>
       )}
     </>
