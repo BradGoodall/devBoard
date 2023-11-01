@@ -7,6 +7,7 @@ import { UserContext } from "./UserContext";
 import NavBar from "./components/NavBar";
 import Home from "./components/Home";
 import Profile from "./components/Profile";
+import Board from "./components/Board";
 
 function App() {
   // This holds the current user object
@@ -34,7 +35,7 @@ function App() {
         {loaded && (
           <>
             {!authUser && <Home />}
-            {authUser && <Profile />}
+            {authUser && <Board />}
           </>
         )}
       </UserContext.Provider>
