@@ -18,11 +18,12 @@ type BoardData = {
   timeCreated: Timestamp;
 };
 
-type Lane = {};
+type Lane = { laneID: string; laneTitle: string; lanePosition: number };
 
 function Board() {
   const [isBoardFetched, setIsBoardFetched] = useState(false);
   const [boardData, setBoardData] = useState<BoardData | undefined>(undefined);
+  const [lanes, setLanes] = useState<Array<Lane>>();
   const authUser = useContext(UserContext);
 
   const createBoard = async () => {
@@ -42,6 +43,7 @@ function Board() {
     const boardDocRef = doc(db, "boards/" + "w9xEaBKo4db1ZkwADsNX");
     const boardDocument = await getDoc(boardDocRef);
     setBoardData(boardDocument.data() as BoardData);
+    await fetchLanes();
     setIsBoardFetched(true);
   };
 
@@ -52,14 +54,12 @@ function Board() {
       "boards/" + "w9xEaBKo4db1ZkwADsNX" + "/lanes/"
     );
     const lanesData = await getDocs(lanesDocRef);
-    lanesData.docs.map((doc) => ({ ...doc.data() } as Lane));
     // Sort the lanes by lanePosition
-    // const sortedLanes = lanesData.docs
-    //   .map((doc) => ({ ...doc.data() } as Lane))
+    const sortedLanes = lanesData.docs.map(
+      (doc) => ({ ...doc.data() } as Lane)
+    );
     //   .sort((a, b) => a.lanePosition - b.lanePosition);
-    // setLanes(sortedLanes);
-    // setBoardData(boardData);
-    // setNewBoardName(boardData.boardName);
+    setLanes(sortedLanes);
     // setBackgroundURL(boardData.backgroundURL);
   };
 
@@ -76,13 +76,27 @@ function Board() {
       )}
       {isBoardFetched && (
         <>
-          <h1 className="text-3xl">{boardData?.boardName}</h1>
-          <h2 className="text-xl">
-            Created on {boardData?.timeCreated.toDate().toUTCString()}
-          </h2>
-          <Button variant="success" onClick={createBoard}>
-            Create Board
-          </Button>
+          <div className="p-3">
+            <h1 className="text-3xl">{boardData?.boardName}</h1>
+            <h2 className="text-xl">
+              Created on {boardData?.timeCreated.toDate().toUTCString()}
+            </h2>
+          </div>
+          <div className="m-2 justify-center">
+            {lanes!.map((lane) => (
+              <div className="p-2 m-1 border-3">
+                <h1>{lane.laneTitle}</h1>
+                <h2>ID: {lane.laneID}</h2>
+                <h2>Pos: {lane.lanePosition}</h2>
+              </div>
+            ))}
+          </div>
+
+          <div>
+            <Button variant="success" onClick={createBoard}>
+              Create Board
+            </Button>
+          </div>
         </>
       )}
     </>
