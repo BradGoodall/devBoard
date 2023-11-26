@@ -1,105 +1,182 @@
+import { useMemo, useState } from "react";
+import { Lane, Id, Job } from "../types";
+import PlusIcon from "../assets/icons/PlusIcon";
+import JobLane from "./JobLane";
 import {
-  collection,
-  addDoc,
-  Timestamp,
-  doc,
-  getDoc,
-  getDocs,
-} from "firebase/firestore";
-import { db } from "../FirebaseConfig";
-import { useContext, useEffect, useState } from "react";
-import { UserContext } from "../UserContext";
-import { Button, Spinner } from "react-bootstrap";
-
-type BoardData = {
-  backgroundURL: string;
-  boardName: string;
-  ownerID: string;
-  timeCreated: Timestamp;
-};
-
-type Lane = { laneID: string; laneTitle: string; lanePosition: number };
+  DndContext,
+  DragCancelEvent,
+  DragEndEvent,
+  DragOverlay,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import { SortableContext, arrayMove } from "@dnd-kit/sortable";
+import { createPortal } from "react-dom";
 
 function Board() {
-  const [isBoardFetched, setIsBoardFetched] = useState(false);
-  const [boardData, setBoardData] = useState<BoardData | undefined>(undefined);
-  const [lanes, setLanes] = useState<Array<Lane>>();
-  const authUser = useContext(UserContext);
+  const [lanes, setLanes] = useState<Lane[]>([]);
+  const lanesId = useMemo(() => lanes.map((lane) => lane.laneID), [lanes]);
 
-  const createBoard = async () => {
-    try {
-      const docRef = await addDoc(collection(db, "boards"), {
-        boardTitle: authUser?.displayName,
-        timeCreated: Timestamp.fromDate(new Date()),
-      });
-      console.log("Document written with ID: ", docRef.id);
-    } catch (e) {
-      console.error("Error adding document: ", e);
-    }
-  };
+  const [jobs, setJobs] = useState<Job[]>([]);
 
-  const fetchBoard = async () => {
-    // Get the board
-    const boardDocRef = doc(db, "boards/" + "w9xEaBKo4db1ZkwADsNX");
-    const boardDocument = await getDoc(boardDocRef);
-    setBoardData(boardDocument.data() as BoardData);
-    await fetchLanes();
-    setIsBoardFetched(true);
-  };
+  const [activeLane, setActiveLane] = useState<Lane | null>(null);
 
-  const fetchLanes = async () => {
-    // Get the lanes
-    const lanesDocRef = collection(
-      db,
-      "boards/" + "w9xEaBKo4db1ZkwADsNX" + "/lanes/"
-    );
-    const lanesData = await getDocs(lanesDocRef);
-    // Sort the lanes by lanePosition
-    const sortedLanes = lanesData.docs.map(
-      (doc) => ({ ...doc.data() } as Lane)
-    );
-    //   .sort((a, b) => a.lanePosition - b.lanePosition);
-    setLanes(sortedLanes);
-    // setBackgroundURL(boardData.backgroundURL);
-  };
-
-  useEffect(() => {
-    fetchBoard();
-  }, []);
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 3, // 3px
+      },
+    })
+  );
 
   return (
-    <>
-      {!isBoardFetched && (
-        <Spinner animation="border" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </Spinner>
-      )}
-      {isBoardFetched && (
-        <>
-          <div className="p-3">
-            <h1 className="text-3xl">{boardData?.boardName}</h1>
-            <h2 className="text-xl">
-              Created on {boardData?.timeCreated.toDate().toUTCString()}
-            </h2>
+    <div
+      className="
+      m-auto
+      flex
+      min-h-screen
+      w-full
+      items-center
+      overflow-x-auto
+      overflow-y-hidden
+      px-[40px]"
+    >
+      <DndContext
+        sensors={sensors}
+        onDragStart={onDragStart}
+        onDragEnd={onDragEnd}
+      >
+        <div className="m-auto flex gap-4">
+          <div className="flex gap-4">
+            <SortableContext items={lanesId}>
+              {lanes.map((lane) => (
+                <JobLane
+                  key={lane.laneID}
+                  lane={lane}
+                  deleteLane={deleteLane}
+                  updateLane={updateLane}
+                  createJob={createJob}
+                  jobs={jobs.filter((job) => job.laneID === lane.laneID)}
+                  deleteJob={deleteJob}
+                />
+              ))}
+            </SortableContext>
           </div>
-          <div className="m-2 justify-center">
-            {lanes!.map((lane) => (
-              <div className="p-2 m-1 border-3">
-                <h1>{lane.laneTitle}</h1>
-                <h2>ID: {lane.laneID}</h2>
-                <h2>Pos: {lane.lanePosition}</h2>
-              </div>
-            ))}
-          </div>
+          <button
+            onClick={() => {
+              addLane();
+            }}
+            className="
+        h-[60px]
+        w-[350px]
+        min-w-[350px]
+        cursor-pointer 
+        rounded-lg
+        bg-mainBackgroundColor
+        border-2
+        border-columnBackgroundColor
+        p-3
+        ring-rose-500
+        hover:ring-2
+        flex
+        gap-2"
+          >
+            <PlusIcon /> Add Lane
+          </button>
+        </div>
 
-          <div>
-            <Button variant="success" onClick={createBoard}>
-              Create Board
-            </Button>
-          </div>
-        </>
-      )}
-    </>
+        {createPortal(
+          <DragOverlay>
+            {activeLane && (
+              <JobLane
+                lane={activeLane}
+                deleteLane={deleteLane}
+                updateLane={updateLane}
+                createJob={createJob}
+                jobs={jobs.filter((job) => job.laneID === activeLane.laneID)}
+                deleteJob={deleteJob}
+              />
+            )}
+          </DragOverlay>,
+          document.body
+        )}
+      </DndContext>
+    </div>
   );
+
+  function addLane() {
+    // Creates a new Lane
+    const laneToAdd: Lane = {
+      laneID: generateId(),
+      title: `Lane ${lanes.length + 1}`,
+    };
+
+    setLanes([...lanes, laneToAdd]);
+  }
+
+  function generateId() {
+    // Generate a random ID
+    return Math.floor(Math.random() * 10001);
+  }
+
+  function deleteLane(id: Id) {
+    const filteredLanes = lanes.filter((lane) => lane.laneID !== id);
+    setLanes(filteredLanes);
+  }
+
+  function updateLane(id: Id, title: string) {
+    const newLanes = lanes.map((lane) => {
+      if (lane.laneID !== id) return lane;
+      return { ...lane, title };
+    });
+
+    setLanes(newLanes);
+  }
+
+  function createJob(laneID: Id) {
+    const newJob: Job = {
+      jobID: generateId(),
+      laneID,
+      content: `Job ${jobs.length + 1}`,
+    };
+
+    setJobs([...jobs, newJob]);
+  }
+
+  function deleteJob(jobID: Id) {
+    const newJobs = jobs.filter((job) => job.jobID !== jobID);
+    setJobs(newJobs);
+  }
+
+  function onDragStart(event: DragCancelEvent) {
+    if (event.active.data.current?.type === "Lane") {
+      setActiveLane(event.active.data.current.lane);
+      return;
+    }
+  }
+
+  function onDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over) return;
+
+    const activeLaneId = active.id;
+    const overLaneId = over.id;
+
+    if (activeLaneId === overLaneId) return;
+
+    setLanes((lanes) => {
+      const activeLaneIndex = lanes.findIndex(
+        (lane) => lane.laneID === activeLaneId
+      );
+
+      const overLaneIndex = lanes.findIndex(
+        (lane) => lane.laneID === overLaneId
+      );
+
+      return arrayMove(lanes, activeLaneIndex, overLaneIndex);
+    });
+  }
 }
+
 export default Board;

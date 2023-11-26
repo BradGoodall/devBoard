@@ -6,7 +6,6 @@ import { User, onAuthStateChanged } from "firebase/auth";
 import { UserContext } from "./UserContext";
 import NavBar from "./components/NavBar";
 import Home from "./components/Home";
-import Profile from "./components/Profile";
 import Board from "./components/Board";
 
 function App() {
