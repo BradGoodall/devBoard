@@ -50,8 +50,8 @@ function JobLane(props: Props) {
         className="
 bg-columnBackgroundColor
 w-[350px]
-h-[500px]
-max-h-[500px]
+h-[800px]
+max-h-[800px]
 rounded-md
 flex
 flex-col
@@ -69,8 +69,8 @@ border-rose-500"
       className="
   bg-columnBackgroundColor
   w-[350px]
-  h-[500px]
-  max-h-[500px]
+  h-[800px]
+  max-h-[800px]
   rounded-md
   flex
   flex-col"

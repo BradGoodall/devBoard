@@ -15,12 +15,20 @@ import { SortableContext, arrayMove } from "@dnd-kit/sortable";
 import { createPortal } from "react-dom";
 
 function Board() {
-  const [lanes, setLanes] = useState<Lane[]>([]);
+  const [lanes, setLanes] = useState<Lane[]>([
+    { laneID: 0, title: "In-Progress" },
+    { laneID: 1, title: "To Do" },
+    { laneID: 2, title: "Completed" },
+  ]);
   const lanesId = useMemo(() => lanes.map((lane) => lane.laneID), [lanes]);
 
   const [jobs, setJobs] = useState<Job[]>([]);
 
   const [activeLane, setActiveLane] = useState<Lane | null>(null);
+
+  const [editTitleMode, setEditTitleMode] = useState(false);
+
+  const [boardTitle, setBoardTitle] = useState("My Board");
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -34,14 +42,57 @@ function Board() {
     <div
       className="
       m-auto
-      flex
       min-h-screen
       w-full
       items-center
       overflow-x-auto
       overflow-y-hidden
-      px-[40px]"
+      px-[40px]
+      py-[40px]"
     >
+      {!editTitleMode && (
+        <div
+          onClick={() => setEditTitleMode(true)}
+          className="
+      text-2xl
+      font-bold
+      py-[20px]
+      px-[20px]
+      my-[10px]
+      bg-mainBackgroundColor
+      rounded-md
+      max-w-max
+      "
+        >
+          {boardTitle}
+        </div>
+      )}
+      {editTitleMode && (
+        <input
+          className="
+          text-2xl
+          font-bold
+          py-[20px]
+          px-[20px]
+          my-[10px]
+          rounded-md
+          bg-black
+          focus:border-rose-500
+          border
+          rounded
+          outline-none
+          max-w-max"
+          value={boardTitle}
+          onChange={(e) => setBoardTitle(e.target.value)}
+          autoFocus
+          onBlur={() => setEditTitleMode(false)}
+          onKeyDown={(e) => {
+            if (e.key !== "Enter") return;
+            setEditTitleMode(false);
+          }}
+        ></input>
+      )}
+
       <DndContext
         sensors={sensors}
         onDragStart={onDragStart}
