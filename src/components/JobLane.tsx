@@ -1,10 +1,12 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import TrashIcon from "../assets/icons/TrashIcon";
 import { Lane, Id, Job } from "../types";
 import { SortableContext, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import PlusIcon from "../assets/icons/PlusIcon";
 import JobCard from "./JobCard";
+import { doc, updateDoc } from "firebase/firestore";
+import { db } from "../FirebaseConfig";
 
 interface Props {
   lane: Lane;
@@ -15,16 +17,21 @@ interface Props {
   deleteJob: (jobID: Id) => void;
   updateJob: (jobID: Id, jobTitle: string) => void;
   jobs: Job[];
-  position: number;
 }
 
 function JobLane(props: Props) {
-  const { lane, deleteLane, updateLane, createJob, jobs, deleteJob, position, updateJob } = props;
+  const { lane, deleteLane, createJob, jobs, deleteJob, updateJob } = props;
 
+  const [laneTitle, setLaneTitle] = useState(lane.laneTitle);
+  const [jobCount, setJobCount] = useState(0);
   const [editMode, setEditMode] = useState(false);
 
-  const jobsIDs = useMemo(() => {
-    return jobs.map((job) => job.jobID);
+  useEffect(() => {
+    countJobs();
+  }, [jobs]);
+
+  const jobIndexes = useMemo(() => {
+    return jobs.map((job) => job.jobIndex);
   }, [jobs]);
 
   const { setNodeRef, attributes, listeners, transform, transition, isDragging } = useSortable({
@@ -46,9 +53,8 @@ function JobLane(props: Props) {
   }
 
   return (
-    <div ref={setNodeRef} style={style} className="bg-columnBackgroundColor w-[350px] h-[800px] max-h-[800px] rounded-md flex flex-col">
+    <div ref={setNodeRef} style={style} className="opacity-95 bg-columnBackgroundColor w-[350px] h-[550px] max-h-[800px] rounded-md flex flex-col">
       {/* Lane Title */}
-
       <div
         {...attributes}
         {...listeners}
@@ -56,18 +62,18 @@ function JobLane(props: Props) {
         className="bg-mainBackgroundColor text-md h-[60px] cursor-grab rounded-md rounded-b-none p-3 font-bold border-columnBackgroundColor border-4 flex items-center justify-between"
       >
         <div className="flex gap-2">
-          <div className="flex justify-center items-center bg-columnBackgroundColor px-2 py-1 text-sm rounded-full">0</div>
-          {!editMode && lane.laneTitle + " [" + position + "] [" + lane.lanePosition + "]"}
+          <div className="flex justify-center items-center bg-columnBackgroundColor px-2 py-1 text-sm rounded-full">{jobCount}</div>
+          {!editMode && laneTitle}
           {editMode && (
             <input
               className="bg-black focus:border-rose-500 border rounded outline-none px-2"
-              value={lane.laneTitle}
-              onChange={(e) => updateLane(lane.laneID, e.target.value)}
+              value={laneTitle}
+              onChange={(e) => setLaneTitle(e.target.value)}
               autoFocus
-              onBlur={() => setEditMode(false)}
+              onBlur={() => updateTitle()}
               onKeyDown={(e) => {
                 if (e.key !== "Enter") return;
-                setEditMode(false);
+                updateTitle();
               }}
             ></input>
           )}
@@ -83,9 +89,9 @@ function JobLane(props: Props) {
       </div>
       {/* Lane Job List */}
       <div className="flex flex-grow flex-col gap-4 p-2 overflow-x-hidden overflow-y-auto">
-        <SortableContext items={jobsIDs}>
-          {jobs.map((job) => (
-            <JobCard key={job.jobID} job={job} deleteJob={deleteJob} updateJob={updateJob} />
+        <SortableContext items={jobIndexes}>
+          {jobs.map((job, index) => (
+            <JobCard key={job.jobID} job={job} deleteJob={deleteJob} updateJob={updateJob} index={index} />
           ))}
         </SortableContext>
       </div>
@@ -101,5 +107,18 @@ function JobLane(props: Props) {
       </button>
     </div>
   );
+
+  async function updateTitle() {
+    setEditMode(false);
+    const laneDocRef = doc(db, "boards/" + "w9xEaBKo4db1ZkwADsNX" + "/lanes/" + lane.laneID);
+    updateDoc(laneDocRef, {
+      laneTitle: laneTitle,
+    });
+  }
+
+  function countJobs() {
+    const count = jobs.filter((job) => job.laneID === lane.laneID);
+    setJobCount(count.length);
+  }
 }
 export default JobLane;

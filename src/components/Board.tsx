@@ -10,6 +10,7 @@ import { Timestamp, collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteD
 import { db } from "../FirebaseConfig";
 import { User } from "firebase/auth";
 import JobCard from "./JobCard";
+import SyncIcon from "../assets/icons/SyncIcon";
 
 interface Props {
   authUser: User | undefined;
@@ -25,13 +26,16 @@ function Board({ authUser }: Props) {
   const [boardTitle, setBoardTitle] = useState("My Board");
   const [isBoardFetched, setIsBoardFetched] = useState(false);
   const [boardData, setBoardData] = useState<BoardData | undefined>(undefined);
+  const [unsavedChanges, setUnsavedChanges] = useState(false);
 
   // Retrieve the Board Data upon load.
   useEffect(() => {
     const fetchBoard = async () => {
       const boardDocRef = doc(db, "boards/" + "w9xEaBKo4db1ZkwADsNX");
       await getDoc(boardDocRef).then((boardDocument) => {
-        setBoardData(boardDocument.data() as BoardData);
+        const fetchedBoardData = boardDocument.data() as BoardData;
+        setBoardData(fetchedBoardData);
+        setBoardTitle(fetchedBoardData.boardTitle);
         console.log("Board Data Loaded");
       });
       await fetchLanes();
@@ -40,7 +44,6 @@ function Board({ authUser }: Props) {
     // If the board hasn't been fetched yet, fetch it.
     if (!isBoardFetched) {
       fetchBoard();
-      setIsBoardFetched(true);
     }
   }, []);
 
@@ -57,47 +60,51 @@ function Board({ authUser }: Props) {
     <>
       {/* If the board hasn't been fetched yet, show a loading spinner. */}
       {!isBoardFetched && (
-        <Spinner animation="border" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </Spinner>
+        <div className="m-auto flex justify-center items-center h-screen">
+          <Spinner animation="border" role="status" />
+        </div>
       )}
       {/* Otherwise, show the board. */}
       {isBoardFetched && (
-        <div className="m-auto min-h-screen w-full items-center overflow-x-auto overflow-y-hidden px-[40px] py-[40px]">
-          {/* Board Title Section */}
-          {!editTitleMode && (
-            <div onClick={() => setEditTitleMode(true)} className="text-2xl font-bold py-[20px] px-[20px] my-[10px] bg-mainBackgroundColor rounded-md max-w-max">
-              {boardData?.boardTitle}
-            </div>
-          )}
-          {editTitleMode && (
-            <div>
-              <input
-                className="text-2xl font-bold py-[20px] px-[20px] my-[10px] rounded-md bg-black focus:border-rose-500 border rounded outline-none max-w-max"
-                value={boardTitle}
-                onChange={(e) => setBoardTitle(e.target.value)}
-                autoFocus
-                onBlur={() => setEditTitleMode(false)}
-                onKeyDown={(e) => {
-                  if (e.key !== "Enter") return;
-                  setEditTitleMode(false);
-                }}
-              ></input>
-            </div>
-          )}
-          <button className="text-sm font-bold py-[10px] px-[10px] my-[10px] bg-mainBackgroundColor rounded-md max-w-max hover:stroke-rose-500 hover:bg-columnBackgroundColor" onClick={saveData}>
-            Save Changes
-          </button>
-          <button className="text-sm font-bold py-[10px] px-[10px] my-[10px] bg-mainBackgroundColor rounded-md max-w-max hover:stroke-rose-500 hover:bg-columnBackgroundColor" onClick={showJobs}>
-            Show Jobs
-          </button>
+        <div style={{ backgroundImage: `url(${boardData?.backgroundURL})` }} className="m-auto min-h-screen overflow-x-auto overflow-y-hidden px-[40px] py-[80px] bg-cover">
+          <div className="flex">
+            {/* Board Title Section */}
+            {!editTitleMode && (
+              <div onClick={() => setEditTitleMode(true)} className="opacity-95 text-2xl font-bold py-[20px] px-[20px] my-[10px] bg-mainBackgroundColor rounded-md max-w-max">
+                {boardTitle}
+              </div>
+            )}
+            {editTitleMode && (
+              <div>
+                <input
+                  className="text-2xl font-bold py-[20px] px-[20px] my-[10px] rounded-md bg-black focus:border-rose-500 border rounded outline-none max-w-max"
+                  value={boardTitle}
+                  onChange={(e) => setBoardTitle(e.target.value)}
+                  autoFocus
+                  onBlur={() => updateBoardTitle()}
+                  onKeyDown={(e) => {
+                    if (e.key !== "Enter") return;
+                    updateBoardTitle();
+                  }}
+                ></input>
+              </div>
+            )}
+            {unsavedChanges && (
+              <button
+                className="flex gap-2 items-center text-sm font-bold py-[10px] px-[10px] my-[10px] bg-mainBackgroundColor rounded-md max-w-max hover:stroke-rose-500 hover:bg-columnBackgroundColor"
+                onClick={saveData}
+              >
+                <SyncIcon /> Save Changes
+              </button>
+            )}
+          </div>
 
           {/* Board Lanes Section */}
           <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragOver={onDragOver}>
             <div className="m-auto flex gap-4">
               <div className="flex gap-4">
                 <SortableContext items={lanesId}>
-                  {lanes.map((lane, index) => (
+                  {lanes.map((lane) => (
                     <JobLane
                       key={lane.laneID}
                       lane={lane}
@@ -106,7 +113,6 @@ function Board({ authUser }: Props) {
                       createJob={createJob}
                       jobs={jobs.filter((job) => job.laneID === lane.laneID)}
                       deleteJob={deleteJob}
-                      position={index}
                       updateJob={updateJob}
                     />
                   ))}
@@ -132,11 +138,10 @@ function Board({ authUser }: Props) {
                     createJob={createJob}
                     jobs={jobs.filter((job) => job.laneID === activeLane.laneID)}
                     deleteJob={deleteJob}
-                    position={activeLane.lanePosition}
                     updateJob={updateJob}
                   />
                 )}
-                {activeJob && <JobCard job={activeJob} deleteJob={deleteJob} updateJob={updateJob} />}
+                {activeJob && <JobCard job={activeJob} deleteJob={deleteJob} updateJob={updateJob} index={0} />}
               </DragOverlay>,
               document.body
             )}
@@ -189,6 +194,7 @@ function Board({ authUser }: Props) {
       jobTitle: "New Job",
       userID: authUser?.uid,
       jobID: "TempID",
+      jobIndex: jobs.length,
     };
 
     // Then we instantly add the job to the lane to avoid a delay when writing to the db.
@@ -240,8 +246,9 @@ function Board({ authUser }: Props) {
     const jobsDocRef = collection(db, "boards/" + "w9xEaBKo4db1ZkwADsNX" + "/jobs/");
     const jobsData = await getDocs(jobsDocRef);
     const fetchedJobs = jobsData.docs.map((doc) => ({ ...doc.data() } as Job));
-    setJobs(fetchedJobs);
+    setJobs(fetchedJobs.sort((a, b) => a.jobIndex - b.jobIndex)); // Sort the jobs by Index
     console.log("Board Lanes Loaded");
+    setIsBoardFetched(true);
   }
 
   function onDragStart(event: DragCancelEvent) {
@@ -258,6 +265,7 @@ function Board({ authUser }: Props) {
 
   // Drag End
   function onDragEnd(event: DragEndEvent) {
+    setUnsavedChanges(true);
     setActiveLane(null);
     setActiveJob(null);
 
@@ -304,7 +312,6 @@ function Board({ authUser }: Props) {
           jobs[activeIndex].laneID = jobs[overIndex].laneID;
           return arrayMove(jobs, activeIndex, overIndex - 1);
         }
-
         return arrayMove(jobs, activeIndex, overIndex);
       });
     }
@@ -328,12 +335,13 @@ function Board({ authUser }: Props) {
       return { ...job, jobTitle };
     });
     setJobs(newJobs);
+    setUnsavedChanges(true);
   }
 
   async function saveData() {
     await updateLanePositions();
     await updateJobData();
-    await updateBoardTitle();
+    await updateBoardTitle().then(() => setUnsavedChanges(false));
   }
 
   async function updateLanePositions() {
@@ -355,6 +363,7 @@ function Board({ authUser }: Props) {
       updateDoc(jobDocRef, {
         laneID: jobToUpdate.laneID,
         jobTitle: jobToUpdate.jobTitle,
+        jobIndex: jobToUpdate.jobIndex,
       });
       console.log("Updated " + jobToUpdate.jobTitle + " data");
     });
@@ -367,10 +376,7 @@ function Board({ authUser }: Props) {
       boardTitle: boardTitle,
     });
     console.log("Updated Board Title to " + boardTitle);
-  }
-
-  function showJobs() {
-    console.log("Current Jobs:", jobs);
+    setEditTitleMode(false);
   }
 }
 

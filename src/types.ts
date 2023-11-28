@@ -15,6 +15,7 @@ export type Job = {
   jobTitle: string;
   userID: string | undefined;
   jobID: string;
+  jobIndex: number;
 };
 
 export type BoardData = {

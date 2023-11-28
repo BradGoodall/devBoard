@@ -11,6 +11,9 @@ export default {
         mono: ["Share Tech Mono", "monospace"],
         rem: ["REM", "sans-serif"],
       },
+      backgroundImage: {
+        office: "url('backgrounds/benjamin-child-office.jpg')",
+      },
     },
   },
   plugins: [],
