@@ -34,7 +34,7 @@ function App() {
         {loaded && (
           <>
             {!authUser && <Home />}
-            {authUser && <Board />}
+            {authUser && <Board authUser={authUser} />}
           </>
         )}
       </UserContext.Provider>
