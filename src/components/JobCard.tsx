@@ -85,11 +85,11 @@ function JobCard({ job, deleteJob, updateJob, index }: Props) {
       {...attributes}
       {...listeners}
       onClick={toggleEditMode}
-      className="bg-mainBackgroundColor p-2.5 min-h-[100px] max-h-max items-center text-left rounded-xl hover:ring-2 hover:ring-inset hover:ring-indigo-500 cursor-grab relative"
+      className="bg-mainBackgroundColor w-[90%] p-2.5 min-h-[100px] max-h-max items-center text-left rounded-xl hover:ring-2 hover:ring-inset hover:ring-indigo-500 cursor-grab relative"
       onMouseEnter={() => setMouseIsOver(true)}
       onMouseLeave={() => setMouseIsOver(false)}
     >
-      <div className="text-xs bg-indigo-500 h-auto max-w-max rounded p-1 flex text-white">ID: {job.jobID}</div>
+      <div className="text-xs bg-indigo-500 h-auto max-w-max rounded p-1 flex text-white relative">ID: {job.jobID}</div>
       <div className="my-auto overflow-y-auto overflow-x-hidden whitespace-pre-wrap">{job.jobTitle}</div>
 
       {mouseIsOver && (

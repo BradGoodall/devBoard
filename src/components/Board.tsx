@@ -60,7 +60,8 @@ function Board({ authUser }: Props) {
     <>
       {/* If the board hasn't been fetched yet, show a loading spinner. */}
       {!isBoardFetched && (
-        <div className="m-auto flex justify-center items-center h-screen">
+        <div className="m-auto flex justify-center items-center h-screen bg-columnBackgroundColor">
+          <p className="p-4">Loading Board...</p>
           <Spinner animation="border" role="status" />
         </div>
       )}

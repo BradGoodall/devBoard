@@ -11,7 +11,7 @@ function NavBar() {
   return (
     <Navbar fixed="top" className="bg-columnBackgroundColor">
       <Container>
-        <Navbar.Brand className="inline-flex m-2 text-2xl text-white font-mono" href="#home">
+        <Navbar.Brand className="inline-flex text-2xl text-white font-mono" href="#home">
           <FaHashtag className="mt-1" />
           devBoard
         </Navbar.Brand>
