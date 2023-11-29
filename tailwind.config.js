@@ -12,8 +12,8 @@ export default {
         rem: ["REM", "sans-serif"],
       },
       backgroundImage: {
-        demo: "url('demo.png')",
-        office: "url('backgrounds/benjamin-child-office.jpg')",
+        demo: "url('/demo.png')",
+        office: "url('/backgrounds/benjamin-child-office.jpg')",
       },
     },
   },
